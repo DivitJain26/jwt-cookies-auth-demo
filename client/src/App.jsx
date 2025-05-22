@@ -1,11 +1,22 @@
-import React from "react"
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import ProtectedRoute from "./routes/ProtectedRoute";
 
-const App = (props) => {
-  return (
-    <>
-        <h1 className="text-green-600 text-4xl">Welcome to the Get Health Project</h1>
-    </>
-  )
+const App = () => {
+    return (
+        <Router>
+            <Routes>
+                <Route path="/" element={<Navigate to="/login" />} />
+                <Route path="/login" element={< Login />} />
+                <Route path="/register" element={< Register />} />
+                <Route path="/dashboard" element={<ProtectedRoute> < Dashboard /> </ProtectedRoute>} />
+            </Routes>
+        </Router>
+    );
 };
 
 export default App;
+// divit26j@gmail.com
