@@ -1,8 +1,27 @@
 # getHealth
 An international field project Collaboration with MIVA x AAMU x MIT ADT University on uPivotal Platform
 
-## Scripts & Commands
+## Project Setup Guide
+### Install Dependencies
 
+**Install root dependencies:**
+```bash
+npm install
+```
+
+**Install client dependencies:**
+```bash
+cd client
+npm install
+```
+
+**Install server dependencies:**
+```bash
+cd ../server
+npm install
+```
+
+## Scripts & Commands
 Run from the *root directory* 
 
 `npm run client` Starts the React frontend                                     
@@ -27,3 +46,4 @@ Use the pre-configured Axios instance in `/src/lib/axios.js` for all API request
 import api from '../lib/axios';
 
 const res = await api.get('/user/profile');
+```
