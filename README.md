@@ -24,12 +24,22 @@ npm install
 ## Scripts & Commands
 Run from the *root directory* 
 
-`npm run client` Starts the React frontend                                     
-`npm run server` Starts the Express backend                                    
-`npm run dev`    Starts both frontend and backend concurrently (if configured) 
+Starts the React frontend   
+```bash
+npm run client
+```
+
+Starts the Express backend       
+```bash
+npm run server
+```
+
+-Starts both frontend and backend concurrently (if configured) 
+```bash
+npm run dev
+```
 
 > Make sure `concurrently` is installed if using `npm run dev`.
-
 
 ## Using `axios.js` for API Calls
 
