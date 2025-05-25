@@ -43,7 +43,7 @@ npm run dev
 
 ## Using `axios.js` for API Calls
 
-Use the pre-configured Axios instance in `/src/lib/axios.js` for all API requests.
+Use the pre-configured Axios instance in `/client/src/lib/axios.js` for all API requests.
 
 ### Key Features
 - Sends cookies with requests (`withCredentials`)
