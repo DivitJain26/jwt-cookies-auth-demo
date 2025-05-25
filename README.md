@@ -24,6 +24,6 @@ Use the pre-configured Axios instance in `/src/lib/axios.js` for all API request
 ### How to Use
 
 ```js
-import api from '../utils/axios';
+import api from '../lib/axios';
 
 const res = await api.get('/user/profile');
