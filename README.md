@@ -34,7 +34,7 @@ Starts the Express backend
 npm run server
 ```
 
-:-Starts both frontend and backend concurrently (if configured) 
+Starts both frontend and backend concurrently (if configured) 
 ```bash
 npm run dev
 ```
