@@ -5,6 +5,8 @@ const api = axios.create({
     withCredentials: true, // Important for cookies
 });
 
+console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL);
+
 // Intercept responses
 api.interceptors.response.use(
     response => response,
