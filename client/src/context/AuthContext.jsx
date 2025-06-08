@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import api from '../lib/axios';
+import api from '../utils/axios.js';
 // import axios from 'axios'; 
 
 // Initial state
