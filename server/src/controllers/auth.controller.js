@@ -28,7 +28,7 @@ const setTokenCookies = (res, accessToken, refreshToken) => {
     res.cookie('accessToken', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: 'none',
         maxAge: ms(process.env.ACCESS_TOKEN_COOKIE_EXPIRES_IN),
     });
 
