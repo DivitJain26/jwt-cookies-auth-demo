@@ -22,7 +22,7 @@ api.interceptors.response.use(
 
             try {
                 // Attempt to refresh token
-                await axios.post(import.meta.env.VITE_API_BASE_URL ?? '/auth/refresh', {}, { withCredentials: true });
+                await axios.post('/auth/refresh', {}, { withCredentials: true });
                 // Retry the original request
                 return api(originalRequest);
             } catch (refreshError) {
