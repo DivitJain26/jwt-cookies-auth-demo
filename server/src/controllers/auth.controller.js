@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken";
 import ms from "ms";
 import User from "../models/user.model.js";
-import e from "express";
 
 // Generate tokens
 const generateTokens = (userId) => {
@@ -97,25 +96,25 @@ export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email }).select('+password')
-        
+
         // Check if user exists
         if (!user) {
             return res.status(402).json({ error: "Invalid credentials" });
         }
-        
+
         // Check if password is correct
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
             return res.status(402).json({ error: "Invalid credentials" });
         }
-        
+
         // Generate token
         const { accessToken, refreshToken } = generateTokens(user._id);
-        
+
         // Save refresh token to user
         user.refreshToken = refreshToken;
         await user.save();
-        
+
         // Set cookies
         setTokenCookies(res, accessToken, refreshToken);
 
@@ -142,7 +141,7 @@ export const refreshToken = async (req, res, next) => {
     try {
         // Get refresh token from cookies
         const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
-        
+
         if (!refreshToken) {
             return res.status(401).json({ error: 'Refresh token not found' });
         }
@@ -193,8 +192,18 @@ export const logout = async (req, res, next) => {
         }
 
         // Clear cookies
-        res.clearCookie('accessToken');
-        res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
+        res.clearCookie('accessToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'none',
+        });
+
+        res.clearCookie('refreshToken', {
+            path: '/api/auth/refresh',
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+        });
 
         res.status(200).json({
             success: true,
