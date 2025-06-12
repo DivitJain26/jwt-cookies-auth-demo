@@ -27,7 +27,7 @@ const setTokenCookies = (res, accessToken, refreshToken) => {
     res.cookie('accessToken', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'none',
+        sameSite: process.env.ACCESS_TOKEN_COOKIE_SAME_SITE,
         maxAge: ms(process.env.ACCESS_TOKEN_COOKIE_EXPIRES_IN),
     });
 
@@ -35,7 +35,7 @@ const setTokenCookies = (res, accessToken, refreshToken) => {
     res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'none',
+        sameSite: process.env.REFRESH_TOKEN_COOKIE_SAME_SITE,
         maxAge: ms(process.env.REFRESH_TOKEN_COOKIE_EXPIRES_IN),
         path: '/api/auth/refresh', // Only sent to refresh endpoint
     });
@@ -195,14 +195,14 @@ export const logout = async (req, res, next) => {
         res.clearCookie('accessToken', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'none',
+            sameSite: process.env.ACCESS_TOKEN_COOKIE_SAME_SITE,
         });
 
         res.clearCookie('refreshToken', {
             path: '/api/auth/refresh',
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: process.env.REFRESH_TOKEN_COOKIE_SAME_SITE,
         });
 
         res.status(200).json({
