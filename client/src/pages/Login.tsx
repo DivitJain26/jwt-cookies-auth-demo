@@ -1,29 +1,35 @@
-import { useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth } from '../context/AuthContext.js';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
-
+//-------------------------Schema----------------------------
 const loginSchema = z.object({
     email: z.string().email({ message: "Invalid email address" }),
     password: z.string()
         .trim()
-        .min(8, { message: "Password must be at least 8 characters" })
-        .regex(/[a-z]/, { message: "Must include a lowercase letter" })
-        .regex(/[A-Za-z]/, { message: "Must include at least one alphabet character" })
-        .regex(/[^A-Za-z0-9]/, { message: "Must include a special character" }),
+        .min(1, { message: "Password is required" })
 });
 
-export default function Login() {
-    const [showPassword, setShowPassword] = useState(false);
+//-------------------------Types----------------------------
+type LoginFormData = z.infer<typeof loginSchema>
+
+interface locationState {
+    from?: {
+        pathname: string;
+    }
+}
+
+const Login: FC = () => {
+    const [showPassword, setShowPassword] = useState<boolean>(false);
 
     const navigate = useNavigate();
     const location = useLocation();
-    const from = location.state?.from?.pathname || '/dashboard';
+    const from = (location.state as locationState)?.from?.pathname || '/dashboard';
 
     const { state, login } = useAuth();
     const { isLoading, isAuthenticated } = state;
@@ -34,7 +40,7 @@ export default function Login() {
         setError,
         clearErrors,
         formState: { errors },
-    } = useForm({
+    } = useForm<LoginFormData>({
         resolver: zodResolver(loginSchema),
     });
 
@@ -44,19 +50,22 @@ export default function Login() {
         }
     }, [isAuthenticated, navigate, from]);
 
-    const onSubmit = async (data) => {
+    const onSubmit = async (data: LoginFormData) => {
         clearErrors();
         try {
             await login(data.email, data.password);
 
-        } catch (error) {
+        } catch (error: unknown) {
             // Assuming `err.message` has the backend error message
+
             setError('root', {
                 type: 'manual',
-                message: error.message || 'Login failed. Please try again.',
+                message: error instanceof Error
+                    ? error.message || 'Login failed. Please try again.'
+                    : 'An unknown error occurred.',
             });
-        }
-    };
+        };
+    }
 
     return (
         <div className="min-h-screen flex gap-1 items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -141,4 +150,6 @@ export default function Login() {
             </div>
         </div>
     );
+
 }
+export default Login;

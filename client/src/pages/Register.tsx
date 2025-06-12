@@ -7,19 +7,29 @@ import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 import { useAuth } from '../context/AuthContext';
 
+//-------------------------Schema----------------------------
+export const registerSchema = z
+    .object({
+        name: z.string().min(1, 'Name is required'),
+        email: z.string().email('Invalid email address'),
+        password: z
+            .string()
+            .min(8, 'Password must be at least 8 characters')
+            .regex(/[a-z]/, { message: 'Must include a lowercase letter' })
+            .regex(/[A-Z]/, { message: 'Must include an uppercase letter' })
+            .regex(/\d/, { message: 'Must include a number' })
+            .regex(/[^A-Za-z0-9]/, { message: 'Must include a special character' }),
+        confirmPassword: z.string().min(1, 'Confirm your password'),
+        role: z.enum(['patient', 'doctor'], { required_error: 'Role is required' })
+    }).refine((data) => data.password === data.confirmPassword, {
+        path: ['confirmPassword'],
+        message: 'Passwords do not match',
+    })
 
-export const registerSchema = z.object({
-    name: z.string().min(1, 'Name is required'),
-    email: z.string().email('Invalid email address'),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
-    confirmPassword: z.string().min(1, 'Confirm your password'),
-    role: z.enum(['patient', 'doctor'], 'Role is required')
-}).refine((data) => data.password === data.confirmPassword, {
-    path: ['confirmPassword'],
-    message: 'Passwords do not match',
-})
+//--------------------------Type----------------------------
+type RegisterFormData = z.infer<typeof registerSchema>;
 
-export default function Register() {
+const Register = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -33,7 +43,7 @@ export default function Register() {
         formState: { errors },
         setError,
         clearErrors
-    } = useForm({
+    } = useForm<RegisterFormData>({
         resolver: zodResolver(registerSchema),
         defaultValues: {
             name: '',
@@ -50,16 +60,18 @@ export default function Register() {
         }
     }, [isAuthenticated, navigate]);
 
-    const onSubmit = async (data) => {
+    const onSubmit = async (data: RegisterFormData) => {
         clearErrors();
         try {
             await register(data.name, data.email, data.password, data.role);
-        } catch (error) {
-            console.log(`Registration faileddd`, error);
+        } catch (error: unknown) {
+            // console.log(`Registration failed`, error);
 
             setError('root', {
                 type: 'manual',
-                message: error.message || 'Registration failed',
+                message: error instanceof Error
+                    ? error.message || 'Registraion failed. Please try again.'
+                    : 'An unknown error occurred.',
             });
         }
     };
@@ -210,3 +222,5 @@ export default function Register() {
     );
 
 }
+
+export default Register;

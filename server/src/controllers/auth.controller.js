@@ -35,7 +35,7 @@ const setTokenCookies = (res, accessToken, refreshToken) => {
     res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: 'none',
         maxAge: ms(process.env.REFRESH_TOKEN_COOKIE_EXPIRES_IN),
         path: '/api/auth/refresh', // Only sent to refresh endpoint
     });

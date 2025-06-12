@@ -1,29 +1,52 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import api from '../utils/axios.js';
-// import axios from 'axios'; 
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import api from '../utils/axios.ts';
 
-// Initial state
+//------------------Types--------------------
+interface User {
+    _id: string,
+    name: string,
+    email: string,
+    role: string,
+}
+
+interface AuthState {
+    user: User | null,
+    isAuthenticated: boolean,
+    isLoading: boolean,
+    error: string | null,
+}
+
+interface AuthContextType {
+    state: AuthState,
+    login: (email: string, password: string) => Promise<void>,
+    register: (name: string, email: string, password: string, role: string) => Promise<void>,
+    logout: () => Promise<void>,
+    clearError: () => void,
+}
+
+//-----------------------Initial state-----------------------------
 const initialState = {
-  user: null,
-  isAuthenticated: false,
-  isLoading: true,
-  error: null,
+    user: null,
+    isAuthenticated: false,
+    isLoading: true,
+    error: null,
 };
 
-const AuthContext = createContext({
+//-------------------- Context Creation --------------------
+const AuthContext = createContext<AuthContextType>({
     state: initialState,
     login: async () => { },
     register: async () => { },
-    logout: () => { },
+    logout: async () => { },
     clearError: () => { },
 });
 
-
-export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
+// -------------------- Provider --------------------
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+    const [user, setUser] = useState<User | null>(null);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const verifyAuth = async () => {
@@ -43,7 +66,7 @@ export const AuthProvider = ({ children }) => {
         verifyAuth();
     }, []);
 
-    const login = async (email, password) => {
+    const login = async (email: string, password: string) => {
         setIsLoading(true);
         setError(null);
 
@@ -55,7 +78,7 @@ export const AuthProvider = ({ children }) => {
             setUser(res.data.user);
             setIsAuthenticated(true);
 
-        } catch (err) {
+        } catch (err: any) {
             console.log(`Login failed ${err}`);
             setIsAuthenticated(false);
             setUser(null);
@@ -65,7 +88,7 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const register = async (name, email, password, role) => {
+    const register = async (name: string, email: string, password: string, role: string) => {
         setIsLoading(true);
         setError(null);
 
@@ -76,7 +99,7 @@ export const AuthProvider = ({ children }) => {
             );
             setUser(res.data.user);
             setIsAuthenticated(true);
-        } catch (err) {
+        } catch (err: any) {
             const errorMessage = err.response.status === 402 ? err.response?.data?.error : 'Registration failed';
             setIsAuthenticated(false);
             setUser(null);
@@ -93,7 +116,7 @@ export const AuthProvider = ({ children }) => {
             await api.post('/auth/logout');
             setUser(null);
             setIsAuthenticated(false);
-        } catch (err) {
+        } catch (err: any) {
             console.log(`Logout failed ${err}`);
             setError(err.response?.data?.message || 'Logout failed');
         } finally {

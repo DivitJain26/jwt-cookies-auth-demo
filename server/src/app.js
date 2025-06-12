@@ -31,7 +31,7 @@ const limiter = rateLimit({
   legacyHeaders: false,
   message: 'Too many requests from this IP, please try again after 15 minutes',
 });
-app.use('/api', limiter);
+// app.use('/api', limiter);
 app.use(express.json({limit: "16kb"}))
 app.use(express.urlencoded({extended: true, limit: "16kb"}))
 app.use(express.static("public"))
@@ -43,4 +43,4 @@ app.use(morgan('dev')); // logs method, URL, status, response time, etc.
 // routes
 app.use("/api/auth", authRoutes)
 
-export { app }
+export { app } 
