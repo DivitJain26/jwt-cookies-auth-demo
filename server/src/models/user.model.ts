@@ -1,7 +1,17 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 
-const userSchema = new mongoose.Schema({
+export interface IUser extends mongoose.Document {
+    _id: string; // Mongoose adds this by default
+    name: string;
+    email: string;
+    password: string;
+    role: 'patient' | 'doctor' | 'admin';
+    refreshToken?: string;
+    comparePassword(enteredPassword: string): Promise<boolean>;
+}
+
+const userSchema = new mongoose.Schema<IUser>({
 
     name: {
         type: String,
@@ -43,7 +53,7 @@ const userSchema = new mongoose.Schema({
 });
 
 // Pre-save hook to hash password before saving
-userSchema.pre('save', async function (next) {     // Skip if password is unchanged
+userSchema.pre<IUser>('save', async function (next) {     // Skip if password is unchanged
     if (!this.isModified('password')) {
         return next();
     }
@@ -52,15 +62,15 @@ userSchema.pre('save', async function (next) {     // Skip if password is unchan
         const salt = await bcrypt.genSalt(10);
         this.password = await bcrypt.hash(this.password, salt);
         next();
-    } catch (error) {
+    } catch (error: any) {
         next(error);
     }
 })
 
 // Instance method to compare password
-userSchema.methods.comparePassword = async function (enteredPassword) {
+userSchema.methods.comparePassword = async function (enteredPassword: string): Promise<boolean> {
     return await bcrypt.compare(enteredPassword, this.password);
 }
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model<IUser>('User', userSchema);
 export default User;

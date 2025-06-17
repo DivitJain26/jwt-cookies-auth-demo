@@ -1,47 +1,17 @@
-import jwt from "jsonwebtoken";
-import ms from "ms";
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+
 import User from "../models/user.model.js";
+import { getEnv } from '../utils/env.js'
+import { generateTokens } from 'utils/token.js';
+import { CookieOptions, SameSiteOption, setTokenCookies } from 'utils/cookies.js';
 
-// Generate tokens
-const generateTokens = (userId) => {
-    // Access token
-    const accessToken = jwt.sign(
-        { id: userId },
-        process.env.JWT_ACCESS_TOKEN_SECRET,
-        { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN }
-    )
+import { ErrorResponse, LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, RefreshTokenRequest, RefreshTokenResponse, LogoutResponse, AuthenticatedRequest, SuccessResponse } from '../types/auth.types'
 
-    // Refresh token
-    const refreshToken = jwt.sign(
-        { id: userId },
-        process.env.JWT_REFRESH_TOKEN_SECRET,
-        { expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRES_IN }
-    );
-
-    return { accessToken, refreshToken };
-}
-
-// Set cookies
-const setTokenCookies = (res, accessToken, refreshToken) => {
-    // Set access token in cookie
-    res.cookie('accessToken', accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.ACCESS_TOKEN_COOKIE_SAME_SITE,
-        maxAge: ms(process.env.ACCESS_TOKEN_COOKIE_EXPIRES_IN),
-    });
-
-    // Set refresh token in cookie
-    res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.REFRESH_TOKEN_COOKIE_SAME_SITE,
-        maxAge: ms(process.env.REFRESH_TOKEN_COOKIE_EXPIRES_IN),
-        path: '/api/auth/refresh', // Only sent to refresh endpoint
-    });
-};
-
-export const register = async (req, res) => {
+export const register = async (
+    req: Request<{}, {}, RegisterRequest>,
+    res: Response<RegisterResponse | ErrorResponse>
+): Promise<Response | void> => {
     try {
         // console.log(req.body); 
         const { name, email, password, role } = req.body;
@@ -49,7 +19,7 @@ export const register = async (req, res) => {
         // Check if user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            return res.status(402).json({ user: existingUser, error: 'User already exists' });
+            return res.status(402).json({ error: 'User already exists' });
         }
 
         // Password validation
@@ -92,10 +62,13 @@ export const register = async (req, res) => {
     }
 }
 
-export const login = async (req, res) => {
+export const login = async (
+    req: Request<{}, {}, LoginRequest>,
+    res: Response<LoginResponse | ErrorResponse>
+): Promise<Response | void> => {
     try {
         const { email, password } = req.body;
-        const user = await User.findOne({ email }).select('+password')
+        const user = await User.findOne({ email }).select('+password');
 
         // Check if user exists
         if (!user) {
@@ -119,14 +92,15 @@ export const login = async (req, res) => {
         setTokenCookies(res, accessToken, refreshToken);
 
         const { _id, name, email: userEmail, role } = user;
+
         res.status(200).json({
             success: true,
             message: 'Login successful',
             user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
+                id: _id,
+                name: name,
+                email: userEmail,
+                role: role,
             }
         });
 
@@ -137,7 +111,11 @@ export const login = async (req, res) => {
 }
 
 // Refresh token
-export const refreshToken = async (req, res, next) => {
+export const refreshToken = async (
+    req: RefreshTokenRequest,
+    res: Response<RefreshTokenResponse | ErrorResponse>,
+    next: NextFunction
+): Promise<Response | void> => {
     try {
         // Get refresh token from cookies
         const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
@@ -147,10 +125,10 @@ export const refreshToken = async (req, res, next) => {
         }
 
         // Verify refresh token
-        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN_SECRET);
+        const decoded = jwt.verify(refreshToken, getEnv('JWT_REFRESH_TOKEN_SECRET')) as jwt.JwtPayload & { id: string };
 
         // Find user with matching refresh token
-        const user = await User.findById(decoded.id).select('+refreshToken');;
+        const user = await User.findById(decoded.id).select('+refreshToken');
 
         if (!user || user.refreshToken !== refreshToken) {
             return res.status(401).json({ error: 'Invalid refresh token' });
@@ -171,38 +149,49 @@ export const refreshToken = async (req, res, next) => {
             message: 'Token refreshed successfully',
         });
 
-    } catch (error) {
+    } catch (error: unknown) {
         console.log(`Refresh Token Error ${error}`);
-        if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+        if (error instanceof Error && (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError')) {
             res.status(401).json({ error: `Refresh Token Error ${error}` });
+        } else {
+            // Pass other errors to the error handler middleware
+            next(error);
         }
     }
 }
 
-export const logout = async (req, res, next) => {
+export const logout = async (
+    req: RefreshTokenRequest,
+    res: Response<LogoutResponse | ErrorResponse>
+): Promise<Response | void> => {
     try {
-        const refreshToken = req.cookies.refreshToken;
+        const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
 
         if (refreshToken) {
             // Find user with this refresh token and clear it
             await User.findOneAndUpdate(
                 { refreshToken },
-                { $set: { refreshToken: '' } }
+                { $set: { refreshToken: '' } },
+                { new: true } // Return the modified document
             );
+        }
+
+        const baseCookieOptions: CookieOptions = {
+            httpOnly: true,
+            secure: getEnv('NODE_ENV') === 'production',
+            maxAge: 0, // Set maxAge to 0 to delete the cookie
         }
 
         // Clear cookies
         res.clearCookie('accessToken', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.ACCESS_TOKEN_COOKIE_SAME_SITE,
+            ...baseCookieOptions,
+            sameSite: getEnv('ACCESS_TOKEN_COOKIE_SAME_SITE') as SameSiteOption,
         });
 
         res.clearCookie('refreshToken', {
+            ...baseCookieOptions,
+            sameSite: getEnv('REFRESH_TOKEN_COOKIE_SAME_SITE') as SameSiteOption,
             path: '/api/auth/refresh',
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.REFRESH_TOKEN_COOKIE_SAME_SITE,
         });
 
         res.status(200).json({
@@ -216,15 +205,25 @@ export const logout = async (req, res, next) => {
 }
 
 // Get current user
-export const getCurrentUser = async (req, res, next) => {
+export const getCurrentUser = async (
+    req: AuthenticatedRequest,
+    res: Response<SuccessResponse | ErrorResponse>
+): Promise<Response | void> => {
     try {
+        if (!req.user?.id) {
+            res.status(401).json({ error: 'Unauthorized - User not authenticated' });
+            return;
+        }
+
         const user = await User.findById(req.user.id);
+
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
 
         res.status(200).json({
             success: true,
+            message: 'User found',
             user: {
                 id: user._id,
                 name: user.name,

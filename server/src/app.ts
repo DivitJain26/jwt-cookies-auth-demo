@@ -1,4 +1,4 @@
-import express from "express"
+import express, { Application } from "express"
 import cors from "cors"
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser"
@@ -6,17 +6,18 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
 
+import { getEnv } from "./utils/env";
 
 // import routes
-import authRoutes from "./routes/auth.route.js"
+import authRoutes from "./routes/auth.route"
 
 dotenv.config();
 
-const app = express()
+const app: Application = express()
 
 app.use(
     cors({
-        origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
+        origin: getEnv('CORS_ORIGIN') ?? 'http://localhost:5173',
         credentials: true
     }) 
 )
@@ -31,7 +32,7 @@ const limiter = rateLimit({
   legacyHeaders: false,
   message: 'Too many requests from this IP, please try again after 15 minutes',
 });
-// app.use('/api', limiter);
+app.use('/api', limiter);
 app.use(express.json({limit: "16kb"}))
 app.use(express.urlencoded({extended: true, limit: "16kb"}))
 app.use(express.static("public"))
