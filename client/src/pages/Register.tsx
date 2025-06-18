@@ -63,7 +63,7 @@ const Register = () => {
     const onSubmit = async (data: RegisterFormData) => {
         clearErrors();
         try {
-            await register(data.name, data.email, data.password, data.role);
+            await register(data.name, data.email, data.password, data.confirmPassword, data.role);
         } catch (error: unknown) {
             // console.log(`Registration failed`, error);
 

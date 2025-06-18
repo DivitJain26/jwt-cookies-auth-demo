@@ -19,7 +19,7 @@ interface AuthState {
 interface AuthContextType {
     state: AuthState,
     login: (email: string, password: string) => Promise<void>,
-    register: (name: string, email: string, password: string, role: string) => Promise<void>,
+    register: (name: string, email: string, password: string, confirmPassword: string, role: string) => Promise<void>,
     logout: () => Promise<void>,
     clearError: () => void,
 }
@@ -88,19 +88,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const register = async (name: string, email: string, password: string, role: string) => {
+    const register = async (name: string, email: string, password: string, confirmPassword: string, role: string) => {
         setIsLoading(true);
         setError(null);
 
         try {
             const res = await api.post(
                 '/auth/register',
-                { name, email, password, role }
+                { name, email, password, confirmPassword, role }
             );
             setUser(res.data.user);
             setIsAuthenticated(true);
         } catch (err: any) {
-            const errorMessage = err.response.status === 402 ? err.response?.data?.error : 'Registration failed';
+            let errorMessage = 'Registration failed';
+
+            if (err.response) {
+                // Handle specific error cases
+                if (err.response.status === 409) {
+                    errorMessage = 'Email already in use';
+                } else if (err.response.status === 400) {
+                    errorMessage = err.response.data.error || 'Invalid input';
+                }
+            }
+
+            setError(errorMessage);
             setIsAuthenticated(false);
             setUser(null);
             throw new Error(errorMessage);

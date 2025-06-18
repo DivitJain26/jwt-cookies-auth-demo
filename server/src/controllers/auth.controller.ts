@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-import User from "../models/user.model.js";
-import { getEnv } from '../utils/env.js'
-import { generateTokens } from 'utils/token.js';
-import { CookieOptions, SameSiteOption, setTokenCookies } from 'utils/cookies.js';
+import User from "../models/user.model.ts";
+import { getEnv } from '../utils/env.ts'
+import { generateTokens } from '../utils/token.ts';
+import { CookieOptions, SameSiteOption, setTokenCookies } from '../utils/cookies.ts';
 
-import { ErrorResponse, LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, RefreshTokenRequest, RefreshTokenResponse, LogoutResponse, AuthenticatedRequest, SuccessResponse } from '../types/auth.types'
+import { ErrorResponse, LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, RefreshTokenRequest, RefreshTokenResponse, LogoutResponse, AuthenticatedRequest, SuccessResponse } from '../types/auth.types.ts'
 
 export const register = async (
     req: Request<{}, {}, RegisterRequest>,
@@ -19,12 +19,12 @@ export const register = async (
         // Check if user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            return res.status(402).json({ error: 'User already exists' });
+            return res.status(409).json({ error: 'User already exists' });
         }
 
         // Password validation
         if (password.length < 8) {
-            return res.status(403).json({ error: 'Password must be at least 6 characters long' });
+            return res.status(409).json({ error: 'Password must be at least 8 characters long' });
         }
 
         // create new user
@@ -165,32 +165,31 @@ export const logout = async (
     res: Response<LogoutResponse | ErrorResponse>
 ): Promise<Response | void> => {
     try {
-        const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
+        const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
 
         if (refreshToken) {
             // Find user with this refresh token and clear it
             await User.findOneAndUpdate(
                 { refreshToken },
                 { $set: { refreshToken: '' } },
-                { new: true } // Return the modified document
             );
         }
 
         const baseCookieOptions: CookieOptions = {
             httpOnly: true,
             secure: getEnv('NODE_ENV') === 'production',
+            sameSite: getEnv('ACCESS_AND_REFRESH_TOKEN_COOKIE_SAME_SITE') as SameSiteOption,
             maxAge: 0, // Set maxAge to 0 to delete the cookie
         }
 
         // Clear cookies
         res.clearCookie('accessToken', {
             ...baseCookieOptions,
-            sameSite: getEnv('ACCESS_TOKEN_COOKIE_SAME_SITE') as SameSiteOption,
+            path: '/',
         });
 
         res.clearCookie('refreshToken', {
             ...baseCookieOptions,
-            sameSite: getEnv('REFRESH_TOKEN_COOKIE_SAME_SITE') as SameSiteOption,
             path: '/api/auth/refresh',
         });
 

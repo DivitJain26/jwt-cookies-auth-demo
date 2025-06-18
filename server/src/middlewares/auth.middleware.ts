@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import User, { IUser } from '../models/user.model';
+import User, { IUser } from '../models/user.model.ts';
+import { getEnv } from '../utils/env.ts';
+
 
 interface AuthenticatedRequest extends Request {
     user?: Pick<IUser, 'id' | 'role'>;
@@ -20,7 +22,7 @@ export const authenticate = async (req: AuthenticatedRequest, res: Response, nex
 
         try {
             // Verify token
-            const decoded = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET) as { id: string };
+            const decoded = jwt.verify(token, getEnv('JWT_ACCESS_TOKEN_SECRET')) as { id: string };
 
             // console.log('req.user:', req.user);
 

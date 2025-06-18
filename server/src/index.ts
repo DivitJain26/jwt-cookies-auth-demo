@@ -1,7 +1,7 @@
 import dotenv from "dotenv" 
-import { app } from "./app.js";
-import connectDB from "./config/db.js"
-import { getEnv } from "./utils/env.js";
+import { app } from "./app.ts";
+import connectDB from "./config/db.ts"
+import { getEnv } from "./utils/env.ts";
 
 dotenv.config({
     path: "./.env"

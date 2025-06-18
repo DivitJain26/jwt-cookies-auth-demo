@@ -1,5 +1,5 @@
 import jwt, { Secret, SignOptions } from "jsonwebtoken";
-import { getEnv } from '../utils/env.js'
+import { getEnv } from '../utils/env.ts'
 
 
 interface Tokens {
@@ -18,14 +18,14 @@ export const generateTokens = (userId: string): Tokens => {
     const accessToken = jwt.sign(
         { id: userId },
         getEnv('JWT_ACCESS_TOKEN_SECRET') as Secret,
-        { expiresIn: getEnv('JWT_ACCESS_TOKEN_EXPIRES_IN') } as SignOptions
+        { expiresIn: getEnv('JWT_ACCESS_TOKEN_AND_COOKIE_EXPIRES_IN') } as SignOptions
     )
 
     // Refresh token
     const refreshToken = jwt.sign(
         { id: userId },
         getEnv('JWT_REFRESH_TOKEN_SECRET'),
-        { expiresIn: getEnv('JWT_REFRESH_TOKEN_EXPIRES_IN') } as SignOptions
+        { expiresIn: getEnv('JWT_REFRESH_TOKEN_AND_COOKIE_EXPIRES_IN') } as SignOptions
     );
 
     return { accessToken, refreshToken };

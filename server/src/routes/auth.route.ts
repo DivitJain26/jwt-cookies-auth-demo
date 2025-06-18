@@ -1,8 +1,8 @@
 import express from 'express';
-import { login, register, refreshToken, getCurrentUser, logout } from '../controllers/auth.controller';
-import { authenticate } from '../middlewares/auth.middleware';
-import { validateRegister, validateLogin } from '../middlewares/validation.middleware';
-import { validationErrors } from '../middlewares/validationResult.middleware';
+import { login, register, refreshToken, getCurrentUser, logout } from '../controllers/auth.controller.ts';
+import { authenticate } from '../middlewares/auth.middleware.ts';
+import { validateRegister, validateLogin } from '../middlewares/validation.middleware.ts';
+import { validationErrors } from '../middlewares/validationResult.middleware.ts';
 
 const router = express.Router();
 

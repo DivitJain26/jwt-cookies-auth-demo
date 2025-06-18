@@ -6,10 +6,10 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
 
-import { getEnv } from "./utils/env";
+import { getEnv } from "./utils/env.ts";
 
 // import routes
-import authRoutes from "./routes/auth.route"
+import authRoutes from "./routes/auth.route.ts"
 
 dotenv.config();
 
